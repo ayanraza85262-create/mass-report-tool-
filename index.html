@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090909">
+<title>MASS REPORT TOOL</title>
+<style>
+:root{--bg:#f3f3f3;--card:#fff;--ink:#111;--muted:#666;--line:#ddd;--dark:#090909}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+header{background:var(--dark);color:#fff;padding:25px 18px;text-align:center;border-bottom:4px solid #777}
+header h1{font-size:clamp(24px,5vw,36px);letter-spacing:1.5px;margin:0 0 8px}header p{margin:0;color:#ccc;font-size:12px;letter-spacing:2px}
+main{max-width:900px;margin:24px auto;padding:0 14px 40px}
+.notice{background:#fff;border:1px solid #bbb;border-left:5px solid #111;padding:13px 15px;border-radius:8px;font-size:13px;line-height:1.5;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px #00000008}
+h2{font-size:18px;margin:0 0 16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;font-size:13px;font-weight:700;margin:0 0 7px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #bbb;border-radius:8px;background:#fff;color:#111;font:inherit;font-size:14px}
+textarea{min-height:92px;resize:vertical}.field{margin-bottom:14px}
+button,.button{display:inline-block;border:0;border-radius:8px;padding:12px 16px;background:#111;color:#fff;font-weight:700;font-size:13px;text-decoration:none;cursor:pointer}
+button.secondary,.button.secondary{background:#eee;color:#111;border:1px solid #bbb}
+button.danger{background:#fff;color:#111;border:1px solid #999}
+.actions{display:flex;gap:9px;flex-wrap:wrap}.muted{color:var(--muted);font-size:12px;line-height:1.5}
+.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
+.toolbar input{max-width:260px}
+.item{border:1px solid #ddd;border-radius:9px;padding:13px;margin-top:10px;background:#fafafa}
+.item-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.item strong{font-size:14px}.tag{font-size:11px;border:1px solid #999;padding:4px 7px;border-radius:20px;white-space:nowrap}
+.item a{color:#111;word-break:break-all;font-size:13px}
+.item p{font-size:13px;line-height:1.45;margin:8px 0}
+.empty{color:#666;text-align:center;padding:22px 8px;font-size:13px}
+footer{text-align:center;color:#666;font-size:11px;padding:10px 18px 30px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.card{padding:16px}.toolbar input{max-width:none;flex:1}}
+</style>
+</head>
+<body>
+<header><h1>MASS REPORT TOOL</h1><p>FACEBOOK • INSTAGRAM</p></header>
+<main>
+<div class="notice"><b>Responsible reporting only:</b> This website helps you document suspected violations and keep a complaint log. It does not send reports automatically or mass-submit reports. Only report content you have reviewed and believe genuinely violates platform rules.</div>
+
+<section class="card">
+<h2>New Complaint Record</h2>
+<form id="complaintForm">
+<div class="grid">
+<div class="field"><label for="platform">Platform</label><select id="platform" required><option>Instagram</option><option>Facebook</option></select></div>
+<div class="field"><label for="category">Violation category</label><select id="category" required><option>Violence</option><option>Threats</option><option>Harassment</option><option>Hate speech</option><option>Impersonation / fake account</option><option>Other</option></select></div>
+</div>
+<div class="field"><label for="url">Profile / Page / Post URL</label><input id="url" type="url" placeholder="https://..." required></div>
+<div class="field"><label for="details">What happened? (brief details)</label><textarea id="details" placeholder="Describe the specific content and why you believe it violates the platform rules." required></textarea></div>
+<div class="field"><label for="evidence">Evidence file (optional)</label><input id="evidence" type="file" accept="image/*,video/*,.pdf"><div class="muted">The file is not uploaded to a server. Only its filename is saved in this local record.</div></div>
+<div class="actions"><button type="submit">SAVE COMPLAINT</button><button class="secondary" type="reset">CLEAR FORM</button></div>
+</form>
+</section>
+
+<section class="card">
+<div class="toolbar"><h2 style="margin:0">Complaint History</h2><input id="search" type="search" placeholder="Search saved records..."></div>
+<div id="records"><div class="empty">No complaint records saved yet.</div></div>
+<div class="actions" style="margin-top:16px"><button class="secondary" id="exportBtn" type="button">EXPORT CSV</button><button class="danger" id="clearBtn" type="button">DELETE ALL RECORDS</button></div>
+</section>
+
+<section class="card">
+<h2>Official reporting resources</h2>
+<p class="muted">Review the content and submit a truthful report directly through the relevant platform. A saved record here does not mean Meta has received or accepted a report.</p>
+<div class="actions">
+<a class="button" href="https://help.instagram.com/" target="_blank" rel="noopener">Instagram Help Center ↗</a>
+<a class="button" href="https://www.facebook.com/help/" target="_blank" rel="noopener">Facebook Help Center ↗</a>
+</div>
+</section>
+</main>
+<footer>Mass Report Tool • Local complaint organizer • Your saved records stay in this browser on this device.</footer>
+<script>
+const KEY='massReportToolRecordsV1';
+const form=document.getElementById('complaintForm'), list=document.getElementById('records'), search=document.getElementById('search');
+function getRecords(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}
+function setRecords(rows){localStorage.setItem(KEY,JSON.stringify(rows))}
+function safe(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){
+ const q=search.value.toLowerCase();
+ const rows=getRecords().filter(r=>(r.platform+' '+r.category+' '+r.url+' '+r.details).toLowerCase().includes(q));
+ if(!rows.length){list.innerHTML='<div class="empty">No matching complaint records.</div>';return}
+ list.innerHTML=rows.map(r=>`<article class="item">
+ <div class="item-top"><strong>${safe(r.platform)} · ${safe(r.category)}</strong><span class="tag">${safe(r.status)}</span></div>
+ <p><a href="${safe(r.url)}" target="_blank" rel="noopener">${safe(r.url)}</a></p>
+ <p>${safe(r.details)}</p>
+ <p class="muted">Saved: ${safe(r.date)}${r.evidence?' · Evidence filename: '+safe(r.evidence):''}</p>
+ <div class="actions"><button class="secondary" type="button" onclick="updateStatus('${r.id}')">UPDATE STATUS</button><button class="danger" type="button" onclick="deleteRecord('${r.id}')">DELETE</button></div>
+ </article>`).join('');
+}
+window.updateStatus=id=>{const rows=getRecords();const r=rows.find(x=>x.id===id);if(!r)return;const choices=['Saved','Submitted on platform','Reviewed by platform','Action taken','No action / not accepted'];const next=prompt('Enter status:\\n'+choices.join('\\n'),r.status);if(next&&choices.includes(next)){r.status=next;setRecords(rows);render()}else if(next)alert('Choose one of the listed statuses.')};
+window.deleteRecord=id=>{if(confirm('Delete this complaint record?')){setRecords(getRecords().filter(r=>r.id!==id));render()}};
+form.addEventListener('submit',e=>{
+ e.preventDefault();const url=document.getElementById('url').value.trim();
+ if(!/^https?:\\/\\//i.test(url)){alert('Enter a valid http or https URL.');return}
+ const rows=getRecords();rows.unshift({id:Date.now().toString(),platform:document.getElementById('platform').value,category:document.getElementById('category').value,url,details:document.getElementById('details').value.trim(),evidence:document.getElementById('evidence').files[0]?.name||'',date:new Date().toLocaleString(),status:'Saved'});
+ setRecords(rows);form.reset();render();alert('Complaint record saved on this device.');
+});
+search.addEventListener('input',render);
+document.getElementById('clearBtn').addEventListener('click',()=>{if(confirm('Permanently delete all records saved in this browser?')){localStorage.removeItem(KEY);render()}});
+document.getElementById('exportBtn').addEventListener('click',()=>{
+ const rows=getRecords();if(!rows.length){alert('There are no records to export.');return}
+ const cols=['platform','category','url','details','evidence','date','status'];
+ const csv=[cols.join(','),...rows.map(r=>cols.map(k=>'"'+String(r[k]||'').replace(/"/g,'""')+'"').join(','))].join('\\r\\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mass-report-tool-records.csv';a.click();URL.revokeObjectURL(a.href);
+});
+render();
+</script>
+</body></html>
